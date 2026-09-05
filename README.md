@@ -1,22 +1,43 @@
 # MPM Pilot
 
-MPM Pilot est une application web d'ordonnancement qui permet de construire un réseau de tâches, d'en calculer les dates et les marges, puis d'identifier les chemins critiques.
-
-## Objectif
-
-L'application aide à analyser les contraintes entre tâches d'un projet selon la méthode MPM (Méthode des Potentiels Métra). Elle fournit une représentation graphique du réseau et les indicateurs nécessaires à l'analyse du planning.
+MPM Pilot est une application web d'ordonnancement des tâches basée sur la Méthode des Potentiels Métra (MPM). Elle aide à construire un planning, à analyser les dépendances entre tâches et à visualiser les résultats dans un graphe MPM.
 
 ## Fonctionnalités
 
-- création et modification des tâches ;
-- gestion des durées et des dépendances ;
-- génération du graphe MPM ;
-- calcul des dates au plus tôt ;
-- calcul des dates au plus tard ;
-- calcul des marges totale et libre ;
-- identification des tâches et des chemins critiques ;
-- export local d'un rapport PDF ;
-- authentification des utilisateurs.
+- création dynamique de projets et de tâches ;
+- gestion des dépendances entre tâches ;
+- calcul automatique des dates au plus tôt ;
+- calcul automatique des dates au plus tard ;
+- calcul des marges totales et libres ;
+- identification des tâches et du chemin critique ;
+- génération automatique du graphe MPM ;
+- authentification des utilisateurs ;
+- export local d'un rapport PDF.
+
+## Stack technique
+
+### Frontend
+
+- React et TypeScript ;
+- Vite ;
+- React Flow pour la visualisation du graphe ;
+- déploiement sur Vercel.
+
+### Backend
+
+- FastAPI Python ;
+- SQLAlchemy ;
+- PostgreSQL ;
+- NetworkX pour les calculs du graphe MPM ;
+- authentification JWT ;
+- déploiement sur Render.
+
+### Base de données et déploiement
+
+- PostgreSQL hébergé sur Neon Cloud ;
+- Docker Compose pour l'environnement local ;
+- frontend déployé sur Vercel ;
+- backend déployé sur Render.
 
 ## Architecture
 
@@ -24,31 +45,35 @@ L'application aide à analyser les contraintes entre tâches d'un projet selon l
 Utilisateur
     |
     v
-Frontend React
+Frontend React/Vite (Vercel)
+    |
+    | API REST
+    v
+Backend FastAPI (Render)
     |
     v
-API FastAPI
-    |
-    v
-PostgreSQL
+PostgreSQL Neon
 ```
 
-Le calcul du réseau MPM est réalisé dans le backend avec NetworkX. Le frontend utilise React Flow pour afficher le graphe.
+Le frontend envoie les données de planification à l'API FastAPI. Le backend valide le graphe, exécute les calculs MPM avec NetworkX et retourne les dates, marges, tâches critiques et chemins critiques.
 
-## Technologies utilisées
+## Liens du projet
 
-- **React, TypeScript et Vite** : interface web et compilation du frontend ;
-- **FastAPI et Pydantic** : API HTTP et validation des données ;
-- **NetworkX** : validation et parcours du graphe de dépendances ;
-- **SQLAlchemy et PostgreSQL** : persistance des utilisateurs et des projets ;
-- **Docker Compose** : exécution coordonnée de PostgreSQL, du backend et du frontend ;
-- **Pytest, Vitest, Ruff et ESLint** : tests et contrôles de qualité.
+- **GitHub :** <https://github.com/Neswilly-nt/mpm-ordonnancement>
+- **Application en ligne :** <https://mpm-frontend-five.vercel.app>
+- **API Backend :** <https://mpm-backend-keuy.onrender.com>
+- **Swagger :** <https://mpm-backend-keuy.onrender.com/docs>
+- **Health check :** <https://mpm-backend-keuy.onrender.com/api/v1/health>
 
-## Installation rapide
+## Installation locale
 
-### Avec Docker
+### Prérequis
 
-Prérequis : Git et Docker Desktop ou Docker Engine avec Docker Compose.
+- Git ;
+- Docker Desktop sous Windows et macOS, ou Docker Engine sous Linux ;
+- Docker Compose v2.
+
+### Avec Docker Compose
 
 ```bash
 git clone https://github.com/Neswilly-nt/mpm-ordonnancement.git
@@ -57,30 +82,77 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Sous PowerShell, la copie de l'environnement s'effectue avec :
+Sous PowerShell :
 
 ```powershell
 Copy-Item .env.example .env
 docker compose up -d --build
 ```
 
-L'installation détaillée pour Windows, Linux et macOS se trouve dans [GUIDE-INSTALLATION.md](GUIDE-INSTALLATION.md).
+Les services sont accessibles aux adresses suivantes :
 
-### Installation manuelle
+- frontend : <http://localhost:5173> ;
+- API : <http://localhost:8000> ;
+- documentation Swagger : <http://localhost:8000/docs> ;
+- health check : <http://localhost:8000/api/v1/health>.
 
-L'installation manuelle nécessite Python 3.13, Node.js 22 et PostgreSQL. Les dépendances backend sont listées dans [backend/requirements.txt](backend/requirements.txt) et [backend/requirements-dev.txt](backend/requirements-dev.txt). Les dépendances frontend sont décrites dans [frontend/package.json](frontend/package.json).
+Pour vérifier l'état des conteneurs :
 
-Pour l'installation courante, Docker Compose reste recommandé.
+```bash
+docker compose ps
+```
+
+Pour arrêter les services sans supprimer le volume PostgreSQL :
+
+```bash
+docker compose down
+```
+
+### Lancement manuel
+
+Pour lancer les composants séparément, installez Python 3.13, Node.js 22 et PostgreSQL.
+
+Backend :
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+Frontend :
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Sous Windows PowerShell, activez l'environnement Python avec `.\.venv\Scripts\Activate.ps1`.
+
+### Variables d'environnement
+
+Copiez [.env.example](.env.example) vers `.env`, puis adaptez les valeurs :
+
+- `DATABASE_URL` : URL de connexion PostgreSQL ;
+- `JWT_SECRET_KEY` : clé secrète utilisée pour signer les jetons ;
+- `ACCESS_TOKEN_EXPIRE_MINUTES` : durée de validité des jetons ;
+- `CORS_ORIGINS` : origine autorisée du frontend, par exemple `http://localhost:5173` ;
+- `VITE_API_URL` : URL de l'API utilisée par le frontend.
+
+Ne versionnez jamais `.env` et utilisez une clé JWT robuste en production.
 
 ## Structure du projet
 
 ```text
-backend/                 API FastAPI, domaine MPM et tests Python
+backend/                 API FastAPI, calcul MPM et tests Python
 frontend/                interface React, styles et tests frontend
 docs/                    documentation API et architecture
-scripts/                 scripts d'installation, de contrôle et de test
-docker-compose.yml       orchestration des services
-.env.example             modèle de configuration locale
+scripts/                 scripts d'installation, de déploiement et de test
+docker-compose.yml       orchestration locale des services
+.env.example             modèle de configuration
 ```
 
 ## Tests
@@ -92,7 +164,7 @@ Depuis la racine du projet :
 ./scripts/check.sh
 ```
 
-Sous Windows :
+Sous Windows PowerShell :
 
 ```powershell
 .\scripts\test.ps1
@@ -100,21 +172,3 @@ Sous Windows :
 ```
 
 Les scripts exécutent les tests backend et frontend, puis les contrôles de lint et le build frontend.
-
-## Utilisation
-
-Après le démarrage :
-
-- application : <http://localhost:5173> ;
-- documentation interactive de l'API : <http://localhost:8000/docs> ;
-- état de santé de l'API : <http://localhost:8000/api/v1/health>.
-
-Créez un compte, ajoutez les tâches et renseignez leurs antécédents séparés par des virgules ou des points-virgules. Le graphe, les dates, les marges et les chemins critiques sont calculés à partir de ces données.
-
-Pour arrêter les services sans supprimer les données PostgreSQL :
-
-```bash
-docker compose down
-```
-
-La clé `JWT_SECRET_KEY` doit rester privée. Le fichier `.env` est local et n'est pas destiné à être versionné.
