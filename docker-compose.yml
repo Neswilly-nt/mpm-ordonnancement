@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mpm}
+      POSTGRES_USER: ${POSTGRES_USER:-mpm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mpm}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mpm}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes: [postgres_data:/var/lib/postgresql/data]
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-mpm}:${POSTGRES_PASSWORD:-mpm}@db:5432/${POSTGRES_DB:-mpm}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-mpm-development-secret-change-me}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+    ports: ["8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_URL: http://localhost:8000/api/v1
+    ports: ["5173:5173"]
+    depends_on: [backend]
+volumes:
+  postgres_data:
