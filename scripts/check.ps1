@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-Set-Location $PSScriptRoot
+Set-Location (Join-Path $PSScriptRoot "..")
 docker compose config --quiet
 if ($LASTEXITCODE -ne 0) { throw "Configuration Docker invalide." }
 docker compose run --rm backend ruff check app tests

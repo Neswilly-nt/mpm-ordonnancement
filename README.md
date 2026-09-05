@@ -1,112 +1,120 @@
-# MPM Pilot — Ordonnancement des tâches
+# MPM Pilot
 
-Application web professionnelle d’ordonnancement conforme à la méthode MPM enseignée en Recherche Opérationnelle.
+MPM Pilot est une application web d'ordonnancement qui permet de construire un réseau de tâches, d'en calculer les dates et les marges, puis d'identifier les chemins critiques.
 
-## Conformité MPM
+## Objectif
 
-- un sommet représente une tâche ;
-- un arc représente une contrainte de précédence ;
-- tableau `Tâche / Durée / T.ant. / T.suc.` ;
-- calcul des dates au plus tôt et au plus tard ;
-- calcul de la marge totale et de la marge libre ;
-- identification de toutes les tâches et de tous les chemins critiques ;
-- sommets Début et Fin explicitement placés aux extrémités du graphe.
+L'application aide à analyser les contraintes entre tâches d'un projet selon la méthode MPM (Méthode des Potentiels Métra). Elle fournit une représentation graphique du réseau et les indicateurs nécessaires à l'analyse du planning.
 
-Pour une tâche `j` :
+## Fonctionnalités
 
-```text
-tôt(j) = max(tôt(i) + durée(i)) pour tous les antécédents i
-tard(i) = min(tard(j) - durée(i)) pour tous les successeurs j
-MT(i) = tard(i) - tôt(i)
-ML(i) = min(tôt(j) - tôt(i) - durée(i))
-```
+- création et modification des tâches ;
+- gestion des durées et des dépendances ;
+- génération du graphe MPM ;
+- calcul des dates au plus tôt ;
+- calcul des dates au plus tard ;
+- calcul des marges totale et libre ;
+- identification des tâches et des chemins critiques ;
+- export local d'un rapport PDF ;
+- authentification des utilisateurs.
 
 ## Architecture
 
 ```text
-mpm-ordonnancement/
-├── backend/
-│   ├── app/
-│   │   ├── api/          # API MPM et authentification JWT
-│   │   ├── core/         # configuration, base, sécurité
-│   │   ├── models/       # modèles SQLAlchemy
-│   │   ├── schemas/      # schémas Pydantic
-│   │   └── services/     # algorithme MPM NetworkX
-│   └── tests/
-├── frontend/
-│   └── src/
-│       ├── components/   # graphe React Flow et navigation
-│       ├── context/      # session et notifications
-│       ├── pages/        # accueil, connexion, inscription, analyse
-│       ├── services/     # client Axios
-│       ├── types/
-│       └── utils/
-├── docs/
-├── docker-compose.yml
-├── setup.sh / install.sh / test.sh / check.sh / deploy.sh
-└── upgrade-v2.ps1 / test.ps1 / check.ps1 / deploy.ps1
+Utilisateur
+    |
+    v
+Frontend React
+    |
+    v
+API FastAPI
+    |
+    v
+PostgreSQL
 ```
 
-## Fonctionnalités V2
+Le calcul du réseau MPM est réalisé dans le backend avec NetworkX. Le frontend utilise React Flow pour afficher le graphe.
 
-- landing page et espace d’analyse protégé ;
-- inscription, connexion et déconnexion ;
-- mots de passe hachés avec Argon2 et session JWT ;
-- profil connecté visible avec initiales, nom et adresse email ;
-- notifications temporaires et animations fluides ;
-- saisie de plusieurs antécédents avec virgules ou points-virgules (`A, B, C`) ;
-- durée effaçable et validation différée ;
-- tableau MPM avec libellés académiques complets ;
-- graphe circulaire inspiré du schéma de cours ;
-- légendes T.ant., T.suc., MT, ML, dates et arcs ;
-- impression de la page et téléchargement direct d’un rapport PDF ;
-- graphe verrouillé par défaut, avec mode de déplacement manuel des sommets ;
-- arcs attachés aux sommets pendant leur déplacement ;
-- menu du compte fermé automatiquement au clic extérieur ou avec Échap.
+## Technologies utilisées
 
-Les améliorations visuelles et ergonomiques sont détaillées dans `CHANGELOG-V2.2.md` et `CHANGELOG-V2.3.md`.
+- **React, TypeScript et Vite** : interface web et compilation du frontend ;
+- **FastAPI et Pydantic** : API HTTP et validation des données ;
+- **NetworkX** : validation et parcours du graphe de dépendances ;
+- **SQLAlchemy et PostgreSQL** : persistance des utilisateurs et des projets ;
+- **Docker Compose** : exécution coordonnée de PostgreSQL, du backend et du frontend ;
+- **Pytest, Vitest, Ruff et ESLint** : tests et contrôles de qualité.
 
-## Installation recommandée sous Windows
+## Installation rapide
 
-Depuis PowerShell, à la racine du projet :
+### Avec Docker
+
+Prérequis : Git et Docker Desktop ou Docker Engine avec Docker Compose.
+
+```bash
+git clone https://github.com/Neswilly-nt/mpm-ordonnancement.git
+cd mpm-ordonnancement
+cp .env.example .env
+docker compose up -d --build
+```
+
+Sous PowerShell, la copie de l'environnement s'effectue avec :
 
 ```powershell
-Set-ExecutionPolicy -Scope Process Bypass
-.\upgrade-v2.ps1
+Copy-Item .env.example .env
+docker compose up -d --build
 ```
 
-Le script prépare `.env`, construit les images, exécute les tests, démarre les services et vérifie l’API.
+L'installation détaillée pour Windows, Linux et macOS se trouve dans [GUIDE-INSTALLATION.md](GUIDE-INSTALLATION.md).
 
-Accès :
+### Installation manuelle
 
-- application : <http://localhost:5173>
-- documentation FastAPI : <http://localhost:8000/docs>
-- contrôle de santé : <http://localhost:8000/api/v1/health>
+L'installation manuelle nécessite Python 3.13, Node.js 22 et PostgreSQL. Les dépendances backend sont listées dans [backend/requirements.txt](backend/requirements.txt) et [backend/requirements-dev.txt](backend/requirements-dev.txt). Les dépendances frontend sont décrites dans [frontend/package.json](frontend/package.json).
 
-## Commandes quotidiennes
+Pour l'installation courante, Docker Compose reste recommandé.
 
-```powershell
-docker compose up -d
-docker compose ps
-.\test.ps1
-.\check.ps1
-docker compose logs --tail=100 backend
-docker compose logs --tail=100 frontend
-docker compose down
+## Structure du projet
+
+```text
+backend/                 API FastAPI, domaine MPM et tests Python
+frontend/                interface React, styles et tests frontend
+docs/                    documentation API et architecture
+scripts/                 scripts d'installation, de contrôle et de test
+docker-compose.yml       orchestration des services
+.env.example             modèle de configuration locale
 ```
-
-Les données PostgreSQL sont conservées dans le volume `postgres_data` après `docker compose down`.
 
 ## Tests
 
-Backend : calculs du cours, tâches parallèles, marge libre, cycles, authentification, mot de passe incorrect et protection de l’API.
+Depuis la racine du projet :
 
-Frontend : accueil, connexion, trois antécédents, séparateurs virgule/point-virgule, durée vide et durée décimale.
+```bash
+./scripts/test.sh
+./scripts/check.sh
+```
 
-## Vocabulaire recommandé
+Sous Windows :
 
-Les intitulés corrects sont **Début au plus tôt**, **Fin au plus tôt**, **Début au plus tard** et **Fin au plus tard**. Les formes abrégées « Début tard » et « Fin tard » sont évitées dans l’interface.
+```powershell
+.\scripts\test.ps1
+.\scripts\check.ps1
+```
 
-## Sécurité avant une mise en production publique
+Les scripts exécutent les tests backend et frontend, puis les contrôles de lint et le build frontend.
 
-La clé `JWT_SECRET_KEY` doit rester secrète. `upgrade-v2.ps1` en génère automatiquement une valeur locale. Pour une mise en production Internet, ajouter HTTPS, migrations Alembic, limitation de débit, récupération de mot de passe et gestion sécurisée des secrets.
+## Utilisation
+
+Après le démarrage :
+
+- application : <http://localhost:5173> ;
+- documentation interactive de l'API : <http://localhost:8000/docs> ;
+- état de santé de l'API : <http://localhost:8000/api/v1/health>.
+
+Créez un compte, ajoutez les tâches et renseignez leurs antécédents séparés par des virgules ou des points-virgules. Le graphe, les dates, les marges et les chemins critiques sont calculés à partir de ces données.
+
+Pour arrêter les services sans supprimer les données PostgreSQL :
+
+```bash
+docker compose down
+```
+
+La clé `JWT_SECRET_KEY` doit rester privée. Le fichier `.env` est local et n'est pas destiné à être versionné.

@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-Set-Location $PSScriptRoot
+Set-Location (Join-Path $PSScriptRoot "..")
 docker compose up -d db
 if ($LASTEXITCODE -ne 0) { throw "PostgreSQL n'a pas demarre." }
 docker compose run --rm -e DATABASE_URL=sqlite:////tmp/mpm-test.db backend python -m pytest -q
